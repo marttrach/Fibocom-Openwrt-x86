@@ -1,0 +1,65 @@
+name: 'OpenWrt ImageBuilder'
+description: 'Build OpenWrt custom images using ImageBuilder - https://openwrt.org/docs/guide-user/additional-software/imagebuilder '
+branding: 
+  icon: 'box'
+  color: 'yellow'
+inputs:
+  image: 
+    description: 'Specifies the imagebuilder tag'
+    required: true
+    default: 'bcm27xx-bcm2711'
+  profile:
+    description: 'Specifies the target image to build - PROFILE'
+    required: false
+    default: ''
+  openwrt-version:
+    description: 'OpenWrt version'
+    required: true
+    default: 'master'
+  packages:
+    description: 'A list of packages to embed into the image - PACKAGES'
+    required: false
+    default: ''
+  files:
+    description: 'Directory with custom files to include - FILES'
+    required: false
+    default: 'files'
+  disabled-services:
+    description: 'The names of services from /etc/init.d to disable, e.g. dhcp for dnsmasq - DISABLED_SERVICES'
+    required: false
+    default: ''
+  bin-dir:
+    description: 'Alternative output directory for the images - BIN_DIR'
+    required: false
+    default: 'bin'
+  rootfs-size:
+    description: 'Override the default rootfs partition size in MegaBytes - ROOTFS_PARTSIZE'
+    required: false
+    default: ''
+  debug:
+    description: 'Set to "1" to enable additional debug info like the content of .config'
+    required: false
+    default: ''
+runs:
+  using: 'composite'
+  steps:
+    - run: |
+        mkdir -p bin && chmod 777 bin && \
+        mkdir -p packages && chmod 777 packages && \
+        docker run --rm \
+          -v ${{ github.action_path }}/make_image.sh:/builder/github_make_image.sh \
+          -v "$(pwd)"/config.sed:/builder/config.sed \
+          -v "$(pwd)"/${{ inputs.files }}/:/builder/files \
+          -v "$(pwd)"/${{ inputs.bin-dir }}/:/builder/bin:rw \
+          -v "$(pwd)"/packages/:/builder/packages \
+          -e PROFILE="${{ inputs.profile }}" \
+          -e PACKAGES="${{ inputs.packages }}" \
+          -e DISABLED_SERVICES="${{ inputs.disabled-services }}" \
+          -e ROOTFS_PARTSIZE="${{ inputs.rootfs-size }}" \
+          -e FILES="files" \
+          -e DEBUG="${{ inputs.debug }}" \
+          -e OPENWRT_VERSION="${{ inputs.openwrt-version }}" \
+          -e OPENWRT_IMAGE="${{ inputs.image }}" \
+          openwrt/imagebuilder:${{ inputs.image }}-${{ inputs.openwrt-version }} \
+            /builder/github_make_image.sh
+      shell: bash
