@@ -1,0 +1,1 @@
+/^CONFIG_TARGET_ROOTFS_EXT4FS/ s/^#*/#/
