@@ -6,6 +6,10 @@ INCLUDE_DOCKER="${INCLUDE_DOCKER:-no}"
 SET_BRLAN_IPV4="${SET_BRLAN_IPV4:-no}"
 BRLAN_IPV4="${BRLAN_IPV4:-192.168.2.1}"
 
+WORKDIR="${WORKDIR:-/home/build/openwrt}"     
+FILES="${FILES:-${WORKDIR}/files}"             
+mkdir -p "${FILES}/etc/uci-defaults" "${FILES}/etc/config"
+
 ENABLE_MODEM_MANAGER="${ENABLE_MODEM_MANAGER:-no}"
 MODEM_MANAGER_APN="${MODEM_MANAGER_APN:-}"
 MODEM_MANAGER_PIN="${MODEM_MANAGER_PIN:-}"
