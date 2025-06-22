@@ -56,11 +56,11 @@ PKG="${PKG} ${EXTRA}"
 
 echo "[`date '+%F %T'`] Packages: ${PKG}"
 
-cd /home/build/openwrt
-make image PROFILE="generic" \
+make -C /home/build/openwrt image \
+     PROFILE="generic" \
      PACKAGES="$PKG" \
      FILES="$FILES" \
-     ROOTFS_PARTSIZE="$PROFILE"
+     ROOTFS_PARTSIZE="$PROFILE_MB"
 
 echo "[`date '+%F %T'`] Build completed successfully."
 
