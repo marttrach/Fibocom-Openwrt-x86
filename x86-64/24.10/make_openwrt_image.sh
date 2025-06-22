@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+make info 
+
 PROFILE="${PROFILE:-512}"
 INCLUDE_DOCKER="${INCLUDE_DOCKER:-no}"
 
@@ -11,11 +13,11 @@ ENABLE_MODEM_MANAGER="${ENABLE_MODEM_MANAGER:-no}"
 MODEM_MANAGER_APN="${MODEM_MANAGER_APN:-internet}"
 MODEM_MANAGER_PIN="${MODEM_MANAGER_PIN:-}"
 
-SRC_FILES="/home/build/openwrt/files"
-FILES="/tmp/custom_files"
-
-mkdir -p "$FILES"
-cp -a "$SRC_FILES/." "$FILES/"
+if [[ "$(pwd)" != "/builder" ]]; then
+  echo This action assumes that the imagebuilder docker image default folder is '/builder' but found:
+  pwd
+  exit -1
+fi
 
 UCI_SCRIPT="$FILES/etc/uci-defaults/99-custom.sh"
 
