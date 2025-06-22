@@ -51,7 +51,7 @@ luci-i18n-acme-zh-tw"
 
 EXTRA2="luci-app-uhttpd luci-app-sqm luci-app-acme kmod-usb-serial-wwan"
 
-PKG="${PKG} ${EXTRA1}" "${EXTRA2}"
+PKG="${PKG} ${EXTRA1} ${EXTRA2}"
 
 [ "${INCLUDE_DOCKER}" = "yes" ] && PKG+=" luci-i18n-dockerman-zh-tw"
 [ "${ENABLE_MODEM_MANAGER}" = "yes" ] && PKG+=" modemmanager luci-proto-modemmanager"
