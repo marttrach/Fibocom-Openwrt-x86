@@ -64,12 +64,12 @@ jobs:
             echo "Building for profile: $profile"
             
             docker run --rm -i \
+              --user root \ 
+              --workdir /home/build/openwrt \ 
               -v "${{ github.workspace }}/bin:/home/build/openwrt/bin" \
-              -v "${{ github.workspace }}/files:/tmp/files_repo:ro" \
-              -v "${{ github.workspace }}/x86-64/container:/home/build/openwrt" \
+              -v "${{ github.workspace }}/files:/home/build/immortalwrt/files" \
               -v "${{ github.workspace }}/x86-64/openwrt.config:/home/build/openwrt/.config" \
               -v "${{ github.workspace }}/x86-64/24.10/make_openwrt_image.sh:/home/build/openwrt/make_openwrt_image.sh" \
-              -e FILES=/tmp/custom_files \
               -e PROFILE=${{ inputs.profile }} \
               -e INCLUDE_DOCKER=${{ inputs.include_docker }} \
               -e SET_BRLAN_IPV4=${{ inputs.set_brlan_ipv4 }} \

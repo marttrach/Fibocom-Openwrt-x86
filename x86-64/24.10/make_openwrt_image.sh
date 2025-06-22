@@ -1,54 +1,36 @@
 #!/bin/bash
 set -e
+
 PROFILE="${PROFILE:-512}"
 INCLUDE_DOCKER="${INCLUDE_DOCKER:-no}"
 
-SET_BRLAN_IPV4="${SET_BRLAN_IPV4:-no}"
+SET_BRLAN_IPV4="${SET_BRLAN_IPV4:-yes}"
 BRLAN_IPV4="${BRLAN_IPV4:-192.168.2.1}"
 
-WORKDIR="${WORKDIR:-/home/build/openwrt}"
-FILES="${FILES:-/tmp/custom_files}"
-mkdir -p "${FILES}/etc/uci-defaults" "${FILES}/etc/config"
-
 ENABLE_MODEM_MANAGER="${ENABLE_MODEM_MANAGER:-no}"
-MODEM_MANAGER_APN="${MODEM_MANAGER_APN:-}"
+MODEM_MANAGER_APN="${MODEM_MANAGER_APN:-internet}"
 MODEM_MANAGER_PIN="${MODEM_MANAGER_PIN:-}"
 
-if [ "${SET_BRLAN_IPV4}" = "yes" ]; then
-cat > "${FILES}/etc/uci-defaults/11-set-lan-ip" <<'EOF'
-#!/bin/sh
-uci set network.lan.ipaddr='__BRLAN_IP__'
-uci commit network
-uci set dhcp.lan.start='100'
-uci set dhcp.lan.limit='150'
-uci set dhcp.lan.leasetime='12h'
-uci commit dhcp
-exit 0
-EOF
-sed -i "s/__BRLAN_IP__/${BRLAN_IPV4}/" "${FILES}/etc/uci-defaults/11-set-lan-ip"
-chmod +x "${FILES}/etc/uci-defaults/11-set-lan-ip"
+SRC_FILES="/home/build/immortalwrt/files"
+FILES="/tmp/custom_files"
+
+mkdir -p "$FILES"
+cp -a "$SRC_FILES/." "$FILES/"
+
+UCI_SCRIPT="$FILES/etc/uci-defaults/99-custom.sh"
+
+[ "$SET_BRLAN_IPV4" = "yes" ] && \
+    sed -i "s/__BRLAN_IP__/${BRLAN_IPV4}/" "$UCI_SCRIPT"
+
+if [ "$ENABLE_MODEM_MANAGER" = "yes" ]; then
+    sed -i "s/__ENABLE_MM__/yes/" "$UCI_SCRIPT"
+    sed -i "s/__APN__/${MODEM_MANAGER_APN}/" "$UCI_SCRIPT"
+    sed -i "s/__PIN__/${MODEM_MANAGER_PIN}/" "$UCI_SCRIPT"
+else
+    sed -i "s/__ENABLE_MM__/no/"  "$UCI_SCRIPT"
 fi
 
-if [ "${ENABLE_MODEM_MANAGER}" = "yes" ]; then
-  if [ -z "${MODEM_MANAGER_APN}" ]; then
-    echo "ERROR: MODEM_MANAGER_APN is empty!"
-    exit 1
-  fi
-cat > "${FILES}/etc/uci-defaults/12-modemmanager" <<'EOF'
-#!/bin/sh
-uci batch <<UCI
-set network.cell=interface
-set network.cell.proto='modemmanager'
-set network.cell.apn='__APN__'
-UCI
-[ -n "__PIN__" ] && uci set network.cell.pin='__PIN__'
-uci commit network
-exit 0
-EOF
-  sed -i "s/__APN__/${MODEM_MANAGER_APN}/" "${FILES}/etc/uci-defaults/12-modemmanager"
-  sed -i "s/__PIN__/${MODEM_MANAGER_PIN}/"  "${FILES}/etc/uci-defaults/12-modemmanager"
-  chmod +x "${FILES}/etc/uci-defaults/12-modemmanager"
-fi
+chmod +x "$UCI_SCRIPT"
 
 PKG="curl luci-i18n-firewall-zh-tw luci-i18n-package-manager-zh-tw \
      luci-i18n-ttyd-zh-tw script-utils"
@@ -75,10 +57,11 @@ PKG="${PKG} ${EXTRA}"
 echo "[`date '+%F %T'`] Packages: ${PKG}"
 
 make image PROFILE="generic" \
-     PACKAGES="${PKG}" \
-     FILES="${FILES}" \
-     ROOTFS_PARTSIZE="${PROFILE}"
+     PACKAGES="$PKG" \
+     FILES="$FILES" \
+     ROOTFS_PARTSIZE="$PROFILE"
 
+echo "[`date '+%F %T'`] Build completed successfully."
 
 if [ $? -ne 0 ]; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') - Error: Build failed!"
