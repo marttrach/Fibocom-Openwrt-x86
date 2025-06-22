@@ -71,10 +71,10 @@ jobs:
 
             docker run --rm -i \
               --user root \
-              -v "${{ github.workspace }}/bin:/home/build/openwrt/bin" \
-              -v "${{ github.workspace }}/files:/home/build/openwrt/files" \
-              -v "${{ github.workspace }}/x86-64/openwrt.config:/home/build/openwrt/.config" \
-              -v "${{ github.workspace }}/x86-64/24.10/make_openwrt_image.sh:/home/build/openwrt/make_openwrt_image.sh" \
+              -v "${{ github.workspace }}/bin:/builder/bin:rw \
+              -v "${{ github.workspace }}/config.sed:/builder/config.sed \
+              -v "${{ github.workspace }}/files:/builder/files" \
+              -v "${{ github.workspace }}/x86-64/24.10/make_openwrt_image.sh:/builder/make_openwrt_image.sh" \
               -e PROFILE=$profile \
               -e INCLUDE_DOCKER=$include_docker \
               -e SET_BRLAN_IPV4=${{ inputs.set_brlan_ipv4 }} \
@@ -83,15 +83,7 @@ jobs:
               -e MODEM_MANAGER_APN="${{ inputs.modem_manager_apn }}" \
               -e MODEM_MANAGER_PIN="${{ inputs.modem_manager_pin }}" \
               openwrt/imagebuilder:x86-64-openwrt-24.10 \
-              /bin/bash /home/build/openwrt/make_openwrt_image.sh
-          done
-
-      - name: Generate Firmware SHA-256
-        run: |
-          cp ${{ github.workspace }}/bin/targets/x86/64/*squashfs-combined-efi.img.gz ${{ github.workspace }}
-          for file in *squashfs-combined-efi.img.gz; do
-            sha256sum "$file" > "$file.sha256"
-            sha256sum -c "$file.sha256"
+              /bin/bash /builder/make_openwrt_image.sh
           done
 
       - name: Create info
@@ -110,7 +102,6 @@ jobs:
           body_path: ${{ github.workspace }}/info.md
           files: |
             ${{ github.workspace }}/*squashfs-combined-efi.img.gz
-            ${{ github.workspace }}/*.sha256
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
