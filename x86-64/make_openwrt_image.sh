@@ -56,6 +56,7 @@ PKG="${PKG} ${EXTRA}"
 
 echo "[`date '+%F %T'`] Packages: ${PKG}"
 
+cd /home/build/openwrt
 make image PROFILE="generic" \
      PACKAGES="$PKG" \
      FILES="$FILES" \
