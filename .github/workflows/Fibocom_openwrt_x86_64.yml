@@ -56,29 +56,30 @@ jobs:
 
       - name: Build openwrt-x86-64-efi
         run: |
+          set -e
           profiles="${{ github.event.inputs.profile }}"
           include_docker="${{ github.event.inputs.include_docker }}"
           IFS=',' read -r -a profile_array <<< "$profiles"
-          
+
           for profile in "${profile_array[@]}"; do
             echo "Building for profile: $profile"
-            
+
             docker run --rm -i \
-              --user root \ 
-              --workdir /home/build/openwrt \ 
+              --user root \
+              --workdir /home/build/openwrt \
               -v "${{ github.workspace }}/bin:/home/build/openwrt/bin" \
               -v "${{ github.workspace }}/files:/home/build/immortalwrt/files" \
               -v "${{ github.workspace }}/x86-64/openwrt.config:/home/build/openwrt/.config" \
               -v "${{ github.workspace }}/x86-64/24.10/make_openwrt_image.sh:/home/build/openwrt/make_openwrt_image.sh" \
-              -e PROFILE=${{ inputs.profile }} \
-              -e INCLUDE_DOCKER=${{ inputs.include_docker }} \
+              -e PROFILE=$profile \
+              -e INCLUDE_DOCKER=$include_docker \
               -e SET_BRLAN_IPV4=${{ inputs.set_brlan_ipv4 }} \
               -e BRLAN_IPV4=${{ inputs.brlan_ipv4 }} \
               -e ENABLE_MODEM_MANAGER=${{ inputs.enable_modem_manager }} \
               -e MODEM_MANAGER_APN="${{ inputs.modem_manager_apn }}" \
               -e MODEM_MANAGER_PIN="${{ inputs.modem_manager_pin }}" \
               openwrt/imagebuilder:x86-64-openwrt-24.10 \
-              /bin/bash /home/build/openwrt/make_openwrt_image.sh 
+              /bin/bash /home/build/openwrt/make_openwrt_image.sh
           done
 
       - name: Generate Firmware SHA-256
