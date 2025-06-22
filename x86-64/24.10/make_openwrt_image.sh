@@ -61,7 +61,6 @@ PKG="${PKG} ${EXTRA1} ${EXTRA2}"
 
 echo "[`date '+%F %T'`] Packages: ${PKG}"
 
-tree /a /f /home/build/openwrt
 ls -al /home/build
 make -C /home/build/openwrt image \
      PROFILE="generic" \
