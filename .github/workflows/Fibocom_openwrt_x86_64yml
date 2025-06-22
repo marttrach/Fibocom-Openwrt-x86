@@ -1,65 +1,105 @@
-name: 'Fibocom OpenWrt ImageBuilder'
-description: 'Build OpenWrt custom images using ImageBuilder - https://openwrt.org/docs/guide-user/additional-software/imagebuilder '
-branding: 
-  icon: 'box'
-  color: 'yellow'
-inputs:
-  image: 
-    description: 'Specifies the imagebuilder tag'
-    required: true
-    default: 'x86/64'
-  profile:
-    description: 'Specifies the target image to build - PROFILE'
-    required: false
-    default: '2048'
-  openwrt-version:
-    description: 'OpenWrt version'
-    required: true
-    default: 'master'
-  packages:
-    description: 'A list of packages to embed into the image - PACKAGES'
-    required: false
-    default: 'base-files ca-bundle dnsmasq dropbear e2fsprogs firewall4 fstools grub2-bios-setup kmod-button-hotplug kmod-nft-offload libc libgcc libustream-mbedtls logd mkf2fs mtd netifd nftables odhcp6c odhcpd-ipv6only opkg partx-utils ppp ppp-mod-pppoe procd-ujail uci uclient-fetch urandom-seed urngd kmod-amazon-ena kmod-amd-xgbe kmod-bnx2 kmod-dwmac-intel kmod-e1000e kmod-e1000 kmod-forcedeth kmod-fs-vfat kmod-igb kmod-igc kmod-ixgbe kmod-r8169 kmod-tg3 kmod-drm-i915 luci kmod-mtk-t7xx kmod-phy-aquantia kmod-sfp kmod-wwan kmod-usb-net-rndis kmod-usb-serial kmod-usb-serial-option kmod-usb3 luci-proto-mbim luci-proto-modemmanager luci-proto-ncm comgt pciutils usbutils block-mount ethtool-full iperf3 luci-i18n-base-zh-tw kmod-usb-net-cdc-mbim umbim picocom kmod-scsi-core kmod-block2mtd block-mount fdisk lsblk speedtest-go kmod-tcp-bbr luci-i18n-uhttpd-zh-tw luci-i18n-sqm-zh-tw luci-i18n-cloudflared-zh-tw luci-i18n-acme-zh-tw luci-app-uhttpd luci-app-sqm luci-app-acme'
-  files:
-    description: 'Directory with custom files to include - FILES'
-    required: false
-    default: 'files'
-  disabled-services:
-    description: 'The names of services from /etc/init.d to disable, e.g. dhcp for dnsmasq - DISABLED_SERVICES'
-    required: false
-    default: ''
-  bin-dir:
-    description: 'Alternative output directory for the images - BIN_DIR'
-    required: false
-    default: 'bin'
-  rootfs-size:
-    description: 'Override the default rootfs partition size in MegaBytes - ROOTFS_PARTSIZE'
-    required: false
-    default: ''
-  debug:
-    description: 'Set to "1" to enable additional debug info like the content of .config'
-    required: false
-    default: ''
-runs:
-  using: 'composite'
-  steps:
-    - run: |
-        mkdir -p bin && chmod 777 bin && \
-        mkdir -p packages && chmod 777 packages && \
-        docker run --rm \
-          -v ${{ github.action_path }}/make_image.sh:/builder/github_make_image.sh \
-          -v "$(pwd)"/config.sed:/builder/config.sed \
-          -v "$(pwd)"/${{ inputs.files }}/:/builder/files \
-          -v "$(pwd)"/${{ inputs.bin-dir }}/:/builder/bin:rw \
-          -v "$(pwd)"/packages/:/builder/packages \
-          -e PROFILE="${{ inputs.profile }}" \
-          -e PACKAGES="${{ inputs.packages }}" \
-          -e DISABLED_SERVICES="${{ inputs.disabled-services }}" \
-          -e ROOTFS_PARTSIZE="${{ inputs.rootfs-size }}" \
-          -e FILES="files" \
-          -e DEBUG="${{ inputs.debug }}" \
-          -e OPENWRT_VERSION="${{ inputs.openwrt-version }}" \
-          -e OPENWRT_IMAGE="${{ inputs.image }}" \
-          openwrt/imagebuilder:${{ inputs.image }}-${{ inputs.openwrt-version }} \
-            /builder/github_make_image.sh
-      shell: bash
+name: build-x86-64-openwrt-24.10.1
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'RootFS 分割區大小(MB)'
+        default: '1024'
+        required: true
+      include_docker:
+        description: '是否編譯 Docker 套件'
+        default: 'yes'
+        type: choice
+        options: [ 'yes', 'no' ]
+      set_brlan_ipv4:
+        description: '是否自訂 br-lan IPv4'
+        default: 'yes'
+        type: choice
+        options: [ 'yes', 'no' ]
+      brlan_ipv4:
+        description: 'br-lan IPv4 (留空採預設 192.168.2.1)'
+        required: false
+      enable_modem_manager:
+        description: '是否啟用 ModemManager 設定'
+        default: 'no'
+        type: choice
+        options: [ 'yes', 'no' ]
+      modem_manager_apn:
+        description: 'SIM APN'
+        required: false
+      modem_manager_pin:
+        description: 'SIM PIN'
+        required: false
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set executable permissions
+        run: chmod +x ${{ github.workspace }}/x86-64/build.sh
+
+
+      - name: Validate modem_manager Inputs
+        run: |
+          if [[ "${{ inputs.enable_modem_manager }}" == "yes" ]]; then
+            if [[ -z "${{ inputs.modem_manager_account }}" || -z "${{ inputs.modem_manager_password }}" ]]; then
+              echo "Error: modem_manager account and password must be provided when modem_manager is enabled!"
+              exit 1
+            fi
+          fi
+
+      - name: Build openwrt-x86-64-efi
+        run: |
+          profiles="${{ github.event.inputs.profile }}"
+          include_docker="${{ github.event.inputs.include_docker }}"
+          IFS=',' read -r -a profile_array <<< "$profiles"
+          
+          for profile in "${profile_array[@]}"; do
+            echo "Building for profile: $profile"
+            
+            docker run --rm -i \
+              --user root \
+              -v "${{ github.workspace }}/bin:/home/build/openwrt/bin" \
+              -v "${{ github.workspace }}/files:/home/build/openwrt/files" \
+              -v "${{ github.workspace }}/x86-64/imm.config:/home/build/openwrt/.config" \
+              -v "${{ github.workspace }}/x86-64/24.10/build.sh:/home/build/openwrt/build.sh" \
+              -e PROFILE=$profile \
+              -e INCLUDE_DOCKER=$include_docker \
+              -e ENABLE_modem_manager=${{ inputs.enable_modem_manager }} \
+              -e modem_manager_ACCOUNT=${{ inputs.modem_manager_account }} \
+              -e modem_manager_PASSWORD=${{ inputs.modem_manager_password }} \
+              openwrt/imagebuilder:x86-64-openwrt-24.10.1 /bin/bash /home/build/openwrt/build.sh
+          done
+
+      - name: Generate Firmware SHA-256
+        run: |
+          cp ${{ github.workspace }}/bin/targets/x86/64/*squashfs-combined-efi.img.gz ${{ github.workspace }}
+          for file in *squashfs-combined-efi.img.gz; do
+            sha256sum "$file" > "$file.sha256"
+            sha256sum -c "$file.sha256"
+          done
+
+      - name: Create info
+        run: |
+          if [ "${{ github.event.inputs.include_docker }}" == "yes" ]; then
+            extra_content="#### With Docker"
+            echo -e "\n $extra_content" >> ${{ github.workspace }}/info.md
+          else
+            echo -e "NO docker"
+          fi
+
+      - name: Upload openwrt as release assets
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: Autobuild-x86-64
+          body_path: ${{ github.workspace }}/info.md
+          files: |
+            ${{ github.workspace }}/*squashfs-combined-efi.img.gz
+            ${{ github.workspace }}/*.sha256
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
