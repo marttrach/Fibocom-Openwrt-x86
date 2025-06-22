@@ -11,7 +11,7 @@ ENABLE_MODEM_MANAGER="${ENABLE_MODEM_MANAGER:-no}"
 MODEM_MANAGER_APN="${MODEM_MANAGER_APN:-internet}"
 MODEM_MANAGER_PIN="${MODEM_MANAGER_PIN:-}"
 
-SRC_FILES="/home/build/immortalwrt/files"
+SRC_FILES="/home/build/openwrt/files"
 FILES="/tmp/custom_files"
 
 mkdir -p "$FILES"
@@ -55,7 +55,7 @@ PKG="${PKG} ${EXTRA}"
 [ "${ENABLE_MODEM_MANAGER}" = "yes" ] && PKG+=" modemmanager luci-proto-modemmanager"
 
 echo "[`date '+%F %T'`] Packages: ${PKG}"
-
+ls -al /home/build/openwrt
 make -C /home/build/openwrt image \
      PROFILE="generic" \
      PACKAGES="$PKG" \
