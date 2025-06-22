@@ -2,9 +2,10 @@
 set -e
 
 WORKDIR="/home/build/openwrt"
-FILES="$WORKDIR/files"
-cp /scripts/make_openwrt_image.sh   "$WORKDIR/"
-cp /scripts/openwrt.config          "$WORKDIR/.config"
+FILES="${WORKDIR}/files"
+mkdir -p "${FILES}"
+cp -a /tmp/files_repo/* "${FILES}/" 2>/dev/null || true
+mkdir -p "${FILES}/etc/uci-defaults" "${FILES}/etc/config"
 
 PROFILE="${PROFILE:-512}"
 INCLUDE_DOCKER="${INCLUDE_DOCKER:-no}"
