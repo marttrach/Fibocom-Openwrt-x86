@@ -2,11 +2,14 @@
 set -e 
 PROFILE="${PROFILE:-512}"
 INCLUDE_DOCKER="${INCLUDE_DOCKER:-no}"
+
 SET_BRLAN_IPV4="${SET_BRLAN_IPV4:-no}"
 BRLAN_IPV4="${BRLAN_IPV4:-192.168.2.1}"
+
 ENABLE_MODEM_MANAGER="${ENABLE_MODEM_MANAGER:-no}"
-MODEM_MANAGER_APN="${MODEM_MANAGER_APN:-internet}"
+MODEM_MANAGER_APN="${MODEM_MANAGER_APN:-}"
 MODEM_MANAGER_PIN="${MODEM_MANAGER_PIN:-}"
+
 
 LOGFILE="/tmp/uci-defaults-log.txt"
 echo "Starting 99-custom.sh at $(date)" >> $LOGFILE
@@ -33,20 +36,25 @@ EOF
   chmod +x /home/build/openwrt/files/etc/uci-defaults/11-set-lan-ip
 fi
 
+# ModemManager ---------------------
 if [ "$ENABLE_MODEM_MANAGER" = "yes" ]; then
-  mkdir -p /home/build/openwrt/files/etc/uci-defaults
-  cat << EOF > /home/build/openwrt/files/etc/uci-defaults/12-modemmanager
+  if [ -z "$MODEM_MANAGER_APN" ]; then
+    echo "ERROR: MODEM_MANAGER_APN is empty!"
+    exit 1
+  fi
+  mkdir -p files/etc/uci-defaults
+  cat > files/etc/uci-defaults/12-modemmanager <<EOF
 #!/bin/sh
-uci -q batch << UCI_EOF
-  set network.cell=interface
-  set network.cell.proto='modemmanager'
-  set network.cell.apn='${MODEM_MANAGER_APN}'
-UCI_EOF
-[ -n "${MODEM_MANAGER_PIN}" ] && uci set network.cell.pin="${MODEM_MANAGER_PIN}"
+uci batch <<UCI
+set network.cell=interface
+set network.cell.proto='modemmanager'
+set network.cell.apn='${MODEM_MANAGER_APN}'
+$( [ -n "$MODEM_MANAGER_PIN" ] && echo "set network.cell.pin='${MODEM_MANAGER_PIN}'" )
+UCI
 uci commit network
 exit 0
 EOF
-  chmod +x /home/build/openwrt/files/etc/uci-defaults/12-modemmanager
+  chmod +x files/etc/uci-defaults/12-modemmanager
 fi
 
 PACKAGES=""
@@ -60,7 +68,7 @@ PACKAGES="$PACKAGES script-utils"
 ADDITIONAL_PACKAGES="\
 base-files ca-bundle dnsmasq dropbear e2fsprogs firewall4 fstools grub2-bios-setup \
 kmod-button-hotplug kmod-nft-offload libc libgcc libustream-mbedtls logd mkf2fs mtd \
-netifd nftables odhcp6c odhcpd-ipv6only opkg partx-utils ppp ppp-mod-modem_manager procd-ujail \
+netifd nftables odhcp6c odhcpd-ipv6only opkg partx-utils ppp ppp-mod-pppoe procd-ujail \
 uci uclient-fetch urandom-seed urngd kmod-amazon-ena kmod-amd-xgbe kmod-bnx2 \
 kmod-dwmac-intel kmod-e1000e kmod-e1000 kmod-forcedeth kmod-fs-vfat kmod-igb kmod-igc \
 kmod-ixgbe kmod-r8169 kmod-tg3 kmod-drm-i915 luci kmod-mtk-t7xx kmod-phy-aquantia \

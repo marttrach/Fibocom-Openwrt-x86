@@ -5,7 +5,7 @@ on:
     inputs:
       profile:
         description: 'RootFS 分割區大小(MB)'
-        default: '1024'
+        default: '2048'
         required: true
       include_docker:
         description: '是否編譯 Docker 套件'
@@ -22,11 +22,13 @@ on:
         required: false
       enable_modem_manager:
         description: '是否啟用 ModemManager 設定'
-        default: 'no'
         type: choice
+        required: true
+        default: 'yes'
         options: [ 'yes', 'no' ]
       modem_manager_apn:
-        description: 'SIM APN'
+        description: 'APN（啟用時必填)'
+        default: 'internet'
         required: false
       modem_manager_pin:
         description: 'SIM PIN'
@@ -43,11 +45,11 @@ jobs:
         run: chmod +x ${{ github.workspace }}/x86-64/make_openwrt_image.sh
 
 
-      - name: Validate modem_manager Inputs
+      - name: Validate ModemManager inputs
         run: |
           if [[ "${{ inputs.enable_modem_manager }}" == "yes" ]]; then
-            if [[ -z "${{ inputs.modem_manager_account }}" || -z "${{ inputs.modem_manager_password }}" ]]; then
-              echo "Error: modem_manager account and password must be provided when modem_manager is enabled!"
+            if [[ -z "${{ inputs.modem_manager_apn }}" ]]; then
+              echo "Error: modem_manager_apn must be provided when ModemManager is enabled!"
               exit 1
             fi
           fi
@@ -62,17 +64,19 @@ jobs:
             echo "Building for profile: $profile"
             
             docker run --rm -i \
-              --user root \
               -v "${{ github.workspace }}/bin:/home/build/openwrt/bin" \
               -v "${{ github.workspace }}/files:/home/build/openwrt/files" \
-              -v "${{ github.workspace }}/x86-64/imm.config:/home/build/openwrt/.config" \
+              -v "${{ github.workspace }}/x86-64/openwrt.config:/home/build/openwrt/.config" \
               -v "${{ github.workspace }}/x86-64/24.10/make_openwrt_image.sh:/home/build/openwrt/make_openwrt_image.sh" \
-              -e PROFILE=$profile \
-              -e INCLUDE_DOCKER=$include_docker \
-              -e ENABLE_modem_manager=${{ inputs.enable_modem_manager }} \
-              -e modem_manager_ACCOUNT=${{ inputs.modem_manager_account }} \
-              -e modem_manager_PASSWORD=${{ inputs.modem_manager_password }} \
-              openwrt/imagebuilder:x86-64-openwrt-24.10.1 /bin/bash /home/build/openwrt/make_openwrt_image.sh
+              -e PROFILE=${{ inputs.profile }} \
+              -e INCLUDE_DOCKER=${{ inputs.include_docker }} \
+              -e SET_BRLAN_IPV4=${{ inputs.set_brlan_ipv4 }} \
+              -e BRLAN_IPV4=${{ inputs.brlan_ipv4 }} \
+              -e ENABLE_MODEM_MANAGER=${{ inputs.enable_modem_manager }} \
+              -e MODEM_MANAGER_APN="${{ inputs.modem_manager_apn }}" \
+              -e MODEM_MANAGER_PIN="${{ inputs.modem_manager_pin }}" \
+              openwrt/imagebuilder:x86-64-openwrt-24.10.1 \
+              /bin/bash /home/build/openwrt/make_openwrt_image.sh
           done
 
       - name: Generate Firmware SHA-256
