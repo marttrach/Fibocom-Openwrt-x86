@@ -67,7 +67,7 @@ jobs:
             docker run --rm -i \
               --user root \
               -v "${{ github.workspace }}/bin:/home/build/openwrt/bin" \
-              -v "${{ github.workspace }}/files:/home/build/immortalwrt/files" \
+              -v "${{ github.workspace }}/files:/home/build/openwrt/files" \
               -v "${{ github.workspace }}/x86-64/openwrt.config:/home/build/openwrt/.config" \
               -v "${{ github.workspace }}/x86-64/24.10/make_openwrt_image.sh:/home/build/openwrt/make_openwrt_image.sh" \
               -e PROFILE=$profile \
