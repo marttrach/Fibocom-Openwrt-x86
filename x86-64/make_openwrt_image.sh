@@ -1,5 +1,12 @@
 #!/bin/bash
 set -e 
+
+WORKDIR="/home/build/openwrt"
+FILES="$WORKDIR/files"
+
+mkdir -p "$FILES"
+cp -a /tmp/files_repo/* "$FILES/" 2>/dev/null || true
+
 PROFILE="${PROFILE:-512}"
 INCLUDE_DOCKER="${INCLUDE_DOCKER:-no}"
 
@@ -96,7 +103,7 @@ fi
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Building image with the following packages:"
 echo "$PACKAGES"
 
-make image PROFILE="generic" PACKAGES="$PACKAGES" FILES="/home/build/openwrt/files" ROOTFS_PARTSIZE=$PROFILE
+make image PROFILE="generic" PACKAGES="$PACKAGES" FILES="$FILES" ROOTFS_PARTSIZE=$PROFILE
 
 if [ $? -ne 0 ]; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') - Error: Build failed!"
