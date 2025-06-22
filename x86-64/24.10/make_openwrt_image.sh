@@ -49,7 +49,7 @@ kmod-scsi-core kmod-block2mtd fdisk lsblk speedtest-go kmod-tcp-bbr \
 luci-i18n-uhttpd-zh-tw luci-i18n-sqm-zh-tw luci-i18n-cloudflared-zh-tw \
 luci-i18n-acme-zh-tw"
 
-EXTRA2 = "luci-app-uhttpd luci-app-sqm luci-app-acme kmod-usb-serial-wwan"
+EXTRA2="luci-app-uhttpd luci-app-sqm luci-app-acme kmod-usb-serial-wwan"
 
 PKG="${PKG} ${EXTRA1}" "${EXTRA2}"
 
