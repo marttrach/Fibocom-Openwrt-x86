@@ -3,10 +3,12 @@ set -e
 
 WORKDIR="/home/build/openwrt"
 FILES="${WORKDIR}/files"
+
+cp /scripts/openwrt.config "$WORKDIR/.config"
+
 mkdir -p "${FILES}"
 cp -a /tmp/files_repo/* "${FILES}/" 2>/dev/null || true
 mkdir -p "${FILES}/etc/uci-defaults" "${FILES}/etc/config"
-
 PROFILE="${PROFILE:-512}"
 INCLUDE_DOCKER="${INCLUDE_DOCKER:-no}"
 
@@ -22,7 +24,6 @@ cat > "${FILES}/etc/uci-defaults/11-set-lan-ip" <<'EOF'
 #!/bin/sh
 uci set network.lan.ipaddr='__BRLAN_IP__'
 uci commit network
-# 調整 DHCP 池
 uci set dhcp.lan.start='100'
 uci set dhcp.lan.limit='150'
 uci set dhcp.lan.leasetime='12h'
@@ -69,7 +70,7 @@ luci-proto-mbim luci-proto-ncm comgt pciutils usbutils block-mount \
 ethtool-full iperf3 luci-i18n-base-zh-tw kmod-usb-net-cdc-mbim umbim picocom \
 kmod-scsi-core kmod-block2mtd fdisk lsblk speedtest-go kmod-tcp-bbr \
 luci-i18n-uhttpd-zh-tw luci-i18n-sqm-zh-tw luci-i18n-cloudflared-zh-tw \
-luci-i18n-acme-zh-tw luci-app-uhttpd luci-app-sqm luci-app-acme"
+luci-i18n-acme-zh-tw luci-app-uhttpd luci-app-sqm luci-app-acme kmod-usb-serial-wwan"
 
 PKG="${PKG} ${EXTRA}"
 
