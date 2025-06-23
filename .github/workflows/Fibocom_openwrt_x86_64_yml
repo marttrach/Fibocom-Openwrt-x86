@@ -17,15 +17,15 @@ on:
         default: 'yes'
         type: choice
         options: [ 'yes', 'no' ]
-      brlan_ipv4:
-        description: 'br-lan IPv4 (留空採預設 192.168.2.1)'
-        required: false
       enable_modem_manager:
         description: '是否啟用 ModemManager 設定'
         type: choice
         required: true
         default: 'yes'
         options: [ 'yes', 'no' ]
+      brlan_ipv4:
+        description: 'br-lan IPv4 (留空採預設 192.168.2.1)'
+        required: false
       modem_manager_apn:
         description: 'APN（啟用時必填)'
         default: 'internet'
