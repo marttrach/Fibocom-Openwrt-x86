@@ -34,8 +34,8 @@ jobs:
       - uses: izer-xyz/openwrt-imagebuilder-action@main
         with:
           image: x86-64
-          profile: Default
-          openwrt-version: master
+          profile: generic
+          openwrt-version: 24.10.1
           packages: >-
             -luci-i18n-dockerman-zh-tw -modemmanager -luci-proto-modemmanager -curl 
             -luci-i18n-firewall-zh-tw -luci-i18n-package-manager-zh-tw 
