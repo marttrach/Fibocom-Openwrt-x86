@@ -59,7 +59,7 @@ jobs:
          # extra-image-name: useless
 
       - name: Store packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: x86-64
           path: bin/*
