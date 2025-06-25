@@ -72,8 +72,8 @@ jobs:
            -v $(pwd)/bin:/openwrt \
            tianon/qemu \
              qemu-system-x86_64 \
-               -machine q35,accel=kvm:tcg \
-               -kernel /openwrt/zImage \
+               -machine q35,accel=tcg \
+               -m 1024M -smp 2 \
                -nographic \
                -nic user,model=e1000 \
                -drive file=/openwrt/generic-squashfs-combined-efi.img,if=virtio,format=raw
