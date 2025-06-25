@@ -67,7 +67,7 @@ jobs:
       - run: |
          sudo chmod -R a+rw ./bin
          ls -la $(pwd)/bin
-         gzip -d --force ./bin/ext4-combined-efi.img.gz || true
+         gzip -d --force ./bin/generic-squashfs-combined-efi.img.gz || true
          docker run --rm \
            -v $(pwd)/bin:/openwrt \
            tianon/qemu \
@@ -76,5 +76,5 @@ jobs:
                -kernel /openwrt/zImage \
                -no-reboot -nographic \
                -nic user -nic user  \
-               -drive file=/openwrt/ext4-combined-efi.img,if=virtio,format=raw  \
+               -drive file=/openwrt/generic-squashfs-combined-efi.img,if=virtio,format=raw  \
                -append "root=/dev/vda"
