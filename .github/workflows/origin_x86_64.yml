@@ -18,7 +18,7 @@ jobs:
   build:
   
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 3
 
     steps:
       
@@ -65,15 +65,17 @@ jobs:
           path: bin/*
           
       - run: |
-         sudo chmod -R a+rw ./bin
-         ls -la $(pwd)/bin
-         gzip -d --force ./bin/generic-squashfs-combined-efi.img.gz || true
-         docker run --rm \
-           -v $(pwd)/bin:/openwrt \
-           tianon/qemu \
-             qemu-system-x86_64 \
-               -machine q35,accel=tcg \
-               -m 1024M -smp 2 \
-               -nographic \
-               -nic user,model=e1000 \
-               -drive file=/openwrt/generic-squashfs-combined-efi.img,if=virtio,format=raw
+          sudo chmod -R a+rw ./bin
+          ls -la ./bin
+          gzip -d --force ./bin/generic-squashfs-combined-efi.img.gz || true
+
+          docker run --rm \
+            -v $(pwd)/bin:/openwrt \
+            tianon/qemu \
+              qemu-system-x86_64 \
+                -machine q35,accel=tcg \
+                -m 1024M -smp 2 \
+                -nographic \
+                -nic user,model=e1000 \
+                -drive file=/openwrt/generic-squashfs-combined-efi.img,if=virtio,format=raw \
+                -append "root=/dev/vda2"
