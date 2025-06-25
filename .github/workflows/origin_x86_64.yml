@@ -76,4 +76,4 @@ jobs:
                -kernel /openwrt/zImage \
                -nographic \
                -nic user,model=e1000 \
-               -drive file=/openwrt/generic-squashfs-combined-efi.img,if=virtio,format=raw,bootindex=0
+               -drive file=/openwrt/generic-squashfs-combined-efi.img,if=virtio,format=raw
