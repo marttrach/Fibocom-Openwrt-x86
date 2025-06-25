@@ -53,7 +53,7 @@ jobs:
             luci-i18n-uhttpd-zh-tw luci-i18n-sqm-zh-tw luci-i18n-cloudflared-zh-tw luci-i18n-acme-zh-tw 
             luci-app-uhttpd luci-app-sqm luci-app-acme kmod-usb-serial-wwan
           files: test/files
-          rootfs-size: 10
+          rootfs-size: 2048
           #debug: 1
           #disabled-services: dhcp
          # extra-image-name: useless
