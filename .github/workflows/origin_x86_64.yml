@@ -69,6 +69,7 @@ jobs:
         run: |
           set -euo pipefail
           gzip -d --force ./bin/generic-squashfs-combined-efi.img.gz || true
+
           timeout 120s docker run --rm \
             -v "$(pwd)/bin":/openwrt \
             tianon/qemu \
@@ -78,12 +79,13 @@ jobs:
                 -nographic \
                 -nic user,model=e1000 \
                 -drive file=/openwrt/generic-squashfs-combined-efi.img,format=raw \
-          2>&1 | tee qemu.log
+          2>&1 | tee qemu.log || true
 
-          if grep -q "Press the \[1\], \[2\], \[3\] or \[4\] key" qemu.log; then
+          if grep -Fq "Press the [1], [2], [3] or [4] key" qemu.log; then
             echo "OpenWrt boot success！"
           else
             echo "boot test failed：didn't show debug info in 120s booting"
             cat qemu.log
             exit 1
           fi
+
