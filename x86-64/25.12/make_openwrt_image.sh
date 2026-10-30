@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-make info 
+make info || { sh ./setup.sh; make info; }
 
 PROFILE="${PROFILE:-512}"
 INCLUDE_DOCKER="${INCLUDE_DOCKER:-no}"
@@ -19,15 +19,18 @@ if [[ "$(pwd)" != "/builder" ]]; then
   exit -1
 fi
 
-UCI_SCRIPT="$FILES/etc/uci-defaults/99-custom.sh"
+UCI_SCRIPT="/builder/files/etc/uci-defaults/99-custom.sh"
 
-[ "$SET_BRLAN_IPV4" = "yes" ] && \
+if [ "$SET_BRLAN_IPV4" = "yes" ]; then
     sed -i "s/__BRLAN_IP__/${BRLAN_IPV4}/" "$UCI_SCRIPT"
+else
+    sed -i "/__BRLAN_IP__/d" "$UCI_SCRIPT"
+fi
 
 if [ "$ENABLE_MODEM_MANAGER" = "yes" ]; then
     sed -i "s/__ENABLE_MM__/yes/" "$UCI_SCRIPT"
     sed -i "s/__APN__/${MODEM_MANAGER_APN}/" "$UCI_SCRIPT"
-    sed -i "s/__PIN__/${MODEM_MANAGER_PIN}/" "$UCI_SCRIPT"
+    sed -i "s/__PIN__/${MODEM_MANAGER_PIN}/g" "$UCI_SCRIPT"
 else
     sed -i "s/__ENABLE_MM__/no/"  "$UCI_SCRIPT"
 fi
@@ -39,7 +42,7 @@ PKG="curl luci-i18n-firewall-zh-tw luci-i18n-package-manager-zh-tw \
 
 EXTRA1="base-files ca-bundle dnsmasq dropbear e2fsprogs firewall4 fstools \
 grub2-bios-setup kmod-button-hotplug kmod-nft-offload libc libgcc libustream-mbedtls \
-logd mkf2fs mtd netifd nftables odhcp6c odhcpd-ipv6only opkg partx-utils \
+logd mkf2fs mtd netifd nftables odhcp6c odhcpd-ipv6only partx-utils \
 procd-ujail uci uclient-fetch urandom-seed urngd \
 kmod-amazon-ena kmod-amd-xgbe kmod-bnx2 kmod-dwmac-intel kmod-e1000e kmod-e1000 \
 kmod-forcedeth kmod-fs-vfat kmod-igb kmod-igc kmod-ixgbe kmod-r8169 kmod-tg3 \
@@ -58,14 +61,11 @@ PKG="${PKG} ${EXTRA1} ${EXTRA2}"
 [ "${INCLUDE_DOCKER}" = "yes" ] && PKG+=" luci-i18n-dockerman-zh-tw"
 [ "${ENABLE_MODEM_MANAGER}" = "yes" ] && PKG+=" modemmanager luci-proto-modemmanager"
 
-[ "${INCLUDE_DOCKER}" = "yes" ] && PKG+=" luci-i18n-dockerman-zh-tw"
-[ "${ENABLE_MODEM_MANAGER}" = "yes" ] && PKG+=" modemmanager luci-proto-modemmanager"
-
 echo "[`date '+%F %T'`] Packages: ${PKG}"
 
 sed -f config.sed -i .config
 
-make image PROFILE="generic" PACKAGES="$PKG" FILES="/builder/files" ROOTFS_PARTSIZE="$PROFILE_MB"
+make image PROFILE="generic" PACKAGES="$PKG" FILES="/builder/files" ROOTFS_PARTSIZE="$PROFILE"
 
 echo "[`date '+%F %T'`] Build completed successfully."
 

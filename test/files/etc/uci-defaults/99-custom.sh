@@ -30,19 +30,23 @@ if [ "__ENABLE_MM__" = "yes" ]; then
 set network.cell=interface
 set network.cell.proto='modemmanager'
 set network.cell.apn='__APN__'
-set network.cell.loglevel='ERR'
-set network.cell.iptype = 'ipv4v6'
+set network.cell.iptype='ipv4v6'
 UCI
     [ -n "__PIN__" ] && uci set network.cell.pincode='__PIN__'
+    # modemmanager proto 需要模組的 sysfs 路徑,kmodloader 在 uci-defaults 前已載入驅動
+    modem=$(readlink -f /sys/bus/pci/drivers/mtk_t7xx/*:* 2>/dev/null | head -n 1)
+    [ -n "$modem" ] && uci set network.cell.device="$modem"
+    uci add_list firewall.@zone[1].network='cell'   # 預設 zone[1] 為 wan
 fi
 
 
-uci add firewall zone
-uci set firewall.@zone[-1].name='docker'
-uci set firewall.@zone[-1].input='ACCEPT'
-uci set firewall.@zone[-1].output='ACCEPT'
-uci set firewall.@zone[-1].forward='ACCEPT'
-uci set firewall.@zone[-1].device='docker0'
+# 具名 section,dockerd init 才會沿用這個 zone 而不是再建一個
+uci set firewall.docker=zone
+uci set firewall.docker.name='docker'
+uci set firewall.docker.input='ACCEPT'
+uci set firewall.docker.output='ACCEPT'
+uci set firewall.docker.forward='ACCEPT'
+uci set firewall.docker.device='docker0'
 
 uci add firewall forwarding
 uci set firewall.@forwarding[-1].src='docker'

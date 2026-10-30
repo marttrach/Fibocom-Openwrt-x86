@@ -1,4 +1,4 @@
-name: build-x86-64-openwrt-24.10.1
+name: build-x86-64-openwrt-25.12.6
 
 on:
   workflow_dispatch:
@@ -42,7 +42,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set executable permissions
-        run: chmod +x ${{ github.workspace }}/x86-64/make_openwrt_image.sh
+        run: chmod +x ${{ github.workspace }}/x86-64/25.12/make_openwrt_image.sh
 
       - name: Initialization environment
         env:
@@ -71,10 +71,10 @@ jobs:
 
             docker run --rm -i \
               --user root \
-              -v "${{ github.workspace }}/bin:/builder/bin:rw \
-              -v "${{ github.workspace }}/config.sed:/builder/config.sed \
-              -v "${{ github.workspace }}/files:/builder/files" \
-              -v "${{ github.workspace }}/x86-64/24.10/make_openwrt_image.sh:/builder/make_openwrt_image.sh" \
+              -v "${{ github.workspace }}/bin:/builder/bin:rw" \
+              -v "${{ github.workspace }}/config.sed:/builder/config.sed" \
+              -v "${{ github.workspace }}/test/files:/builder/files" \
+              -v "${{ github.workspace }}/x86-64/25.12/make_openwrt_image.sh:/builder/make_openwrt_image.sh" \
               -e PROFILE=$profile \
               -e INCLUDE_DOCKER=$include_docker \
               -e SET_BRLAN_IPV4=${{ inputs.set_brlan_ipv4 }} \
@@ -82,7 +82,7 @@ jobs:
               -e ENABLE_MODEM_MANAGER=${{ inputs.enable_modem_manager }} \
               -e MODEM_MANAGER_APN="${{ inputs.modem_manager_apn }}" \
               -e MODEM_MANAGER_PIN="${{ inputs.modem_manager_pin }}" \
-              openwrt/imagebuilder:x86-64-openwrt-24.10 \
+              openwrt/imagebuilder:x86-64-25.12.6 \
               /bin/bash /builder/make_openwrt_image.sh
           done
 
@@ -92,7 +92,7 @@ jobs:
             extra_content="#### With Docker"
             echo -e "\n $extra_content" >> ${{ github.workspace }}/info.md
           else
-            echo -e "NO docker"
+            echo -e "NO docker" >> ${{ github.workspace }}/info.md
           fi
 
       - name: Upload openwrt as release assets
@@ -101,7 +101,7 @@ jobs:
           tag_name: Autobuild-x86-64
           body_path: ${{ github.workspace }}/info.md
           files: |
-            ${{ github.workspace }}/*squashfs-combined-efi.img.gz
+            ${{ github.workspace }}/bin/targets/x86/64/*squashfs-combined-efi.img.gz
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
